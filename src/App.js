@@ -3,12 +3,13 @@ import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import { Row, Col, Container, Button, Form, ButtonGroup, Card, ListGroup, ListGroupItem } from 'react-bootstrap';
+import { connect } from 'react-redux';
+import { getData, setData, filterData } from './redux/action/action';
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      eventList: [],
       Name: '',
       Description: '',
       Venue: '',
@@ -18,8 +19,6 @@ class App extends React.Component {
   }
   createEvent = (event) => {
     event.preventDefault();
-    // if (!this.state.name || !this.state.description || !this.state.venue || !this.state.price || !this.state.discount)
-    // alert('invalid inputs');
     let x = 0;
     if (isNaN(this.state.Price) || this.state.Price === '') {
       this.setState({ validatePrice: 1 })
@@ -44,9 +43,9 @@ class App extends React.Component {
     if (!x && (parseInt(this.state.Price) < parseInt(this.state.Discount)))
       // console.log(this.state.price + 'and' + this.state.discount)
       alert('dise valusconut should be less than pric');
-    else {
+    else if (!x) {
       let list1 = [];
-      if (localStorage.getItem('elist') === null) {
+      if (localStorage.getItem('elist') === null || localStorage.getItem('elist') === undefined) {
         list1 = [];
       }
       else {
@@ -60,10 +59,12 @@ class App extends React.Component {
         eprice: this.state.Price,
         ediscount: this.state.Discount || "0",
       })
-      localStorage.setItem('elist', JSON.stringify(list1));
-      this.setState({
-        eventList: [...list1],
-      })
+      // localStorage.setItem('elist', JSON.stringify(list1));
+      // this.setState({
+      //   eventList: [...list1],
+      // })
+      this.props.setData1(list1);
+
       this.clearFields();
     }
 
@@ -73,7 +74,6 @@ class App extends React.Component {
   onChangehandler = event => {
     let x = event.target.name;
     let valx = "validate" + x;
-    console.log(valx + "xxx" + x);
     this.setState({
       [x]: event.target.value,
       [valx]: 0
@@ -81,9 +81,11 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    const list = JSON.parse(localStorage.getItem('elist'));
-    if (list !== null)
-      this.setState({ eventList: list })
+    // const list = JSON.parse(localStorage.getItem('elist'));
+    // if (list !== null)
+    //   this.setState({ eventList: list })
+    console.log("chaladidmoutn");
+    this.props.getData1();
   }
 
   clearFields = () => {
@@ -101,34 +103,38 @@ class App extends React.Component {
     if (list !== null) {
 
       if (event.target.id === 'All') {
-        this.setState({
-          eventList: [...list]
-        })
+        // this.setState({
+        //   eventList: [...list]
+        // })
+        this.props.filterData1(list);
       }
       else if (event.target.id === 'Discount') {
         const l1 = list.filter(item => item.ediscount !== "0")
-        this.setState({
-          eventList: [...l1]
-        })
+        // this.setState({
+        //   eventList: [...l1]
+        // })
+        this.props.filterData1(l1);
       }
       else if (event.target.id === 'free') {
         const l1 = list.filter(item => item.eprice === "0")
-        this.setState({
-          eventList: [...l1]
-        })
+        // this.setState({
+        //   eventList: [...l1]
+        // })
+        this.props.filterData1(l1);
       }
       else if (event.target.id === 'NoDiscount') {
         const l1 = list.filter(item => item.ediscount === "0")
-        this.setState({
-          eventList: [...l1]
-        })
+        // this.setState({
+        //   eventList: [...l1]
+        // })
+        this.props.filterData1(l1);
       }
     }
   }
 
   render() {
     return (
-      < div >
+      < div className="divstyle">
         <header>
           <Container >
             <Row>
@@ -139,8 +145,6 @@ class App extends React.Component {
                     <Button id="Discount" onClick={this.filterList}>Discount</Button>&nbsp;&nbsp;
                     <Button id="NoDiscount" onClick={this.filterList}>No Discount</Button>&nbsp;&nbsp;
                   <Button id="free" onClick={this.filterList}>free</Button>&nbsp;&nbsp;
-
-                    {/* <Button id="Free" onClick={this.filterList}>Free</Button>&nbsp;&nbsp; */}
                   </ButtonGroup>
                 </Row>
                 <Row >
@@ -149,21 +153,21 @@ class App extends React.Component {
                 </h1>
                 </Row>
                 <Row>
-                  {this.state.eventList.map(items => {
+                  {this.props.eventData1 && this.props.eventData1.map(items => {
 
                     return (<>
                       <br />
                       <Card style={{ width: '18rem' }}>
                         <Card.Body>
-                          <Card.Title>{items.ename}</Card.Title>
+                          <Card.Title>Event name:{items.ename}</Card.Title>
                           <Card.Text>
-                            {items.edesc}
+                            DESCRIPTION:{items.edesc}
                           </Card.Text>
                         </Card.Body>
                         <ListGroup className="list-group-flush">
-                          <ListGroupItem>{items.evenue}</ListGroupItem>
-                          <ListGroupItem>{items.eprice}</ListGroupItem>
-                          <ListGroupItem>{items.ediscount}</ListGroupItem>
+                          <ListGroupItem>VENUE:{items.evenue}</ListGroupItem>
+                          <ListGroupItem>PRICE:{items.eprice}</ListGroupItem>
+                          <ListGroupItem>DISCOUNT:{items.ediscount}</ListGroupItem>
                         </ListGroup>
                       </Card>
                     </>
@@ -214,10 +218,28 @@ class App extends React.Component {
               </Col>
             </Row>
           </Container>
+
         </header>
+        <footer className="footer">
+          <p>Developed By:Deepali Gupta</p>
+        </footer>
       </div >
     )
   }
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  console.log("staetto props" + state);
+  return {
+    eventData1: state.eventData
+  }
+}
+const mapDispatchToProps = (dispatch) => {
+  console.log("dispatchfuncto" + dispatch);
+  return {
+    getData1: () => dispatch(getData()),
+    setData1: (x) => dispatch(setData(x)),
+    filterData1: (x) => dispatch(filterData(x))
+  }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(App);
